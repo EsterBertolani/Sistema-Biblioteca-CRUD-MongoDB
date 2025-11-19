@@ -1,5 +1,7 @@
 from bson import ObjectId
 
+# precisa instalar o pacote 'bson' se não estiver usando o pymongo diretamente
+
 class Leitor:
     def __init__(self,
                 _id: ObjectId = None, #  no Mongo o _id padrão é um ObjectId. Usar ObjectId() garante IDs únicos e compatibilidade direta com drivers (pymongo).
