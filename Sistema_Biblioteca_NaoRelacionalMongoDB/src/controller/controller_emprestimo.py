@@ -6,7 +6,7 @@ from model.emprestimo import Emprestimo
 
 
 class ControllerEmprestimo:
-    def _init_(self):
+    def __init__(self):
         self.mongo = MongoQueries()
 
     # ---------------------------------------
