@@ -1,47 +1,93 @@
-from conexion.mysql_queries import MySQLQueries
+from conexion.mongo_queries import MongoQueries
 
 class Relatorios:
     def __init__(self):
-        # Lê os arquivos SQL e armazena as queries
-        with open("sql/relatorio_1.sql", "r", encoding="utf-8") as f:
-            self.query_relatorio_emprestimos = f.read()
-
-        with open("sql/relatorio_2.sql", "r", encoding="utf-8") as f:
-            self.query_relatorio_livros = f.read()
+        pass
 
     # ------------------------------------------------------------
-    def get_relatorio_emprestimos(self):
-        mysql = MySQLQueries()
-        mysql.connect()
+    def get_relatorio_emprestimos_detalhados(self):
+        mongo = MongoQueries()
+        mongo.connect()
 
-        print("\nRELATÓRIO DE EMPRÉSTIMOS DETALHADOS\n")
-        resultado = mysql.fetch(self.query_relatorio_emprestimos)
+        print("\n=== RELATÓRIO DE EMPRÉSTIMOS DETALHADOS ===\n")
 
-        if len(resultado) == 0:
-            print("Nenhum registro encontrado.")
+        pipeline = [
+            {"$lookup": {
+                "from": "leitor",
+                "localField": "id_leitor",
+                "foreignField": "id_leitor",
+                "as": "leitor"
+            }},
+            {"$unwind": "$leitor"},
+
+            {"$lookup": {
+                "from": "livro",
+                "localField": "id_livro",
+                "foreignField": "id_livro",
+                "as": "livro"
+            }},
+            {"$unwind": "$livro"},
+
+            {"$project": {
+                "_id": 0,
+                "id_emprestimo": 1,
+                "leitor": "$leitor.nome",
+                "livro": "$livro.titulo",
+                "data_emprestimo": 1,
+                "data_devolucao_prevista": 1,
+                "data_devolucao_realizada": 1
+            }}
+        ]
+
+        resultado = list(mongo.db["emprestimo"].aggregate(pipeline))
+
+        if not resultado:
+            print("Nenhum empréstimo encontrado.")
         else:
-            for linha in resultado:
+            for r in resultado:
                 print(
-                    f"ID: {linha[0]} | Leitor: {linha[1]} | Livro: {linha[2]} | "
-                    f"Empréstimo: {linha[3]} | Devolvido em: {linha[4]}"
+                    f"ID: {r['id_emprestimo']} | "
+                    f"Leitor: {r['leitor']} | "
+                    f"Livro: {r['livro']} | "
+                    f"Empréstimo: {r['data_emprestimo']} | "
+                    f"Prevista: {r['data_devolucao_prevista']} | "
+                    f"Devolução: {r['data_devolucao_realizada']}"
                 )
 
-        input("\nPressione Enter para sair do relatório.")
-        mysql.close()
+        mongo.close()
 
-    # ------------------------------------------------------------
-    def get_relatorio_livros(self):
-        mysql = MySQLQueries()
-        mysql.connect()
+    def get_relatorio_total_emprestimos_por_livro(self):
+        mongo = MongoQueries()
+        mongo.connect()
 
-        print("\nRELATÓRIO DE TOTAL DE EMPRÉSTIMOS POR LIVRO\n")
-        resultado = mysql.fetch(self.query_relatorio_livros)
+        print("\n=== RELATÓRIO DE LIVROS MAIS EMPRESTADOS ===\n")
 
-        if len(resultado) == 0:
+        pipeline = [
+            {"$group": {
+                "_id": "$id_livro",
+                "total": {"$sum": 1}
+            }},
+            {"$lookup": {
+                "from": "livro",
+                "localField": "_id",
+                "foreignField": "id_livro",
+                "as": "livro"
+            }},
+            {"$unwind": "$livro"},
+            {"$project": {
+                "_id": 0,
+                "livro": "$livro.titulo",
+                "total": 1
+            }},
+            {"$sort": {"total": -1}}
+        ]
+
+        resultado = list(mongo.db["emprestimo"].aggregate(pipeline))
+
+        if not resultado:
             print("Nenhum registro encontrado.")
         else:
-            for linha in resultado:
-                print(f"Livro: {linha[0]} | Total de Empréstimos: {linha[1]}")
+            for r in resultado:
+                print(f"Livro: {r['livro']} | Total de Empréstimos: {r['total']}")
 
-        input("\nPressione Enter para sair do relatório.")
-        mysql.close()
+        mongo.close()

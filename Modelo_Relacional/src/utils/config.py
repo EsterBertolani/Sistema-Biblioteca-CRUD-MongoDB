@@ -1,3 +1,7 @@
+# ===============================
+# MENUS DO SISTEMA
+# ===============================
+
 MENU_PRINCIPAL = """
 === MENU PRINCIPAL ===
 1 - Relatórios
@@ -10,7 +14,7 @@ MENU_PRINCIPAL = """
 MENU_RELATORIOS = """
 === RELATÓRIOS ===
 1 - Relatório de Empréstimos Detalhados
-2 - Relatório de Total de Empréstimos por Livros
+2 - Relatório de Total de Empréstimos por Livro
 0 - SAIR
 """
 
@@ -22,13 +26,15 @@ MENU_ENTIDADES = """
 0 - SAIR
 """
 
-QUERY_COUNT = 'select count(1) as total_{tabela} from {tabela}'
-
+# ===============================
+# FUNÇÃO UTILITÁRIA
+# ===============================
 
 def clear_console(wait_time: int = 2):
-    '''
+    """
     Limpa a tela após alguns segundos.
-    '''
+    Compatível com Windows (cls) e Linux/Mac (clear).
+    """
     import os
     from time import sleep
     sleep(wait_time)

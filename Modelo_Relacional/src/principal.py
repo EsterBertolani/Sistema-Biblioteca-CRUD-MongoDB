@@ -1,27 +1,33 @@
 from utils import config
-# from utils.splash_screen import SplashScreen
+from utils.splash_screen import SplashScreen
 from reports.relatorios import Relatorios
 from controller.controller_leitor import ControllerLeitor
 from controller.controller_livro import ControllerLivro
 from controller.controller_emprestimo import ControllerEmprestimo
 
-# tela_inicial = SplashScreen()
+# Instâncias principais do sistema
+tela_inicial = SplashScreen()
 relatorio = Relatorios()
 ctrl_leitor = ControllerLeitor()
 ctrl_livro = ControllerLivro()
 ctrl_emprestimo = ControllerEmprestimo()
 
+
+# ============================================================
+# Função para leitura de opção com validação
+# ============================================================
 def pedir_opcao(menu_text: str) -> int:
-    """vai mostrar o tipo de menu que passar por parâmetro e pedir a opção dele (tratamento de erro)"""
     while True:
         print(menu_text)
         try:
             return int(input("Escolha uma opção: "))
         except ValueError:
-            print("Digite um número válido.")
-            continue
+            print("Digite um número válido.\n")
 
 
+# ============================================================
+# RELATÓRIOS
+# ============================================================
 def reports(opcaoRelatorio: int):
     match opcaoRelatorio:
         case 1:
@@ -31,10 +37,12 @@ def reports(opcaoRelatorio: int):
             relatorio.get_relatorio_total_emprestimos_por_livro()
 
         case _:
-            print("Inválido. Tente novamente.")
-            return
+            print("Opção inválida.")
 
 
+# ============================================================
+# INSERIR
+# ============================================================
 def insert(opcaoInsert: int):
     match opcaoInsert:
         case 1:
@@ -44,13 +52,15 @@ def insert(opcaoInsert: int):
             ctrl_livro.cadastrar_livro()
 
         case 3:
-            ctrl_emprestimo.registrar_emprestimo()
+            ctrl_emprestimo.cadastrar_emprestimo()
 
         case _:
-            print("Inválido. Tente novamente.")
-            return
+            print("Opção inválida.")
 
 
+# ============================================================
+# ATUALIZAR
+# ============================================================
 def update(opcaoUpdate: int):
     match opcaoUpdate:
         case 1:
@@ -60,13 +70,15 @@ def update(opcaoUpdate: int):
             ctrl_livro.atualizar_livro()
 
         case 3:
-            ctrl_emprestimo.devolver_livro()
+            ctrl_emprestimo.atualizar_emprestimo()
 
         case _:
-            print("Inválido. Tente novamente.")
-            return
+            print("Opção inválida.")
 
 
+# ============================================================
+# REMOVER
+# ============================================================
 def delete(opcaoDelete: int):
     match opcaoDelete:
         case 1:
@@ -79,93 +91,66 @@ def delete(opcaoDelete: int):
             ctrl_emprestimo.excluir_emprestimo()
 
         case _:
-            print("Inválido. Tente novamente.")
-            return
+            print("Opção inválida.")
 
 
+# ============================================================
+# EXECUÇÃO PRINCIPAL DO SISTEMA
+# ============================================================
 def run():
-    # print(tela_inicial.get_updated_screen())
-    # print(tela_inicial.get_updated_screen())
+    print(tela_inicial.get_updated_screen())
+    print("Iniciando o sistema...")
     config.clear_console(3)
 
     while True:
-        print(config.MENU_PRINCIPAL)
-        try:
-            opcao = int(input("Escolha uma opção: "))
-
-            opcao = int(input("Escolha uma opção: "))
-
-        except ValueError:
-            print("Digite um número válido.")
-            continue
+        opcao = pedir_opcao(config.MENU_PRINCIPAL)
 
         match opcao:
             case 1:
                 opRelatorios = pedir_opcao(config.MENU_RELATORIOS)
                 if opRelatorios == 0:
-                    continue
-                reports(opRelatorios)
+                    print(tela_inicial.get_updated_screen())
+                    config.clear_console()
+                else:
+                    reports(opRelatorios)
 
             case 2:
                 opInsert = pedir_opcao(config.MENU_ENTIDADES)
                 if opInsert == 0:
-                    continue
-                insert(opInsert)
+                    print(tela_inicial.get_updated_screen())
+                    config.clear_console()
+                else:
+                    insert(opInsert)
 
             case 3:
                 opUpdate = pedir_opcao(config.MENU_ENTIDADES)
                 if opUpdate == 0:
-                    continue
-                update(opUpdate)
+                    print(tela_inicial.get_updated_screen())
+                    config.clear_console()
+                else:
+                    update(opUpdate)
 
             case 4:
                 opDelete = pedir_opcao(config.MENU_ENTIDADES)
                 if opDelete == 0:
-                    continue
-                delete(opDelete)
+                    print(tela_inicial.get_updated_screen())
+                    config.clear_console()
+                else:
+                    delete(opDelete)
 
             case 0:
+                print(tela_inicial.get_updated_screen())
+                config.clear_console()
                 print("Saindo...")
                 break
 
             case _:
-                print("Inválido. Tente novamente.")
-        match opcao:
-            case 1:
-                opRelatorios = pedir_opcao(config.MENU_RELATORIOS)
-                if opRelatorios == 0:
-                    continue
-                reports(opRelatorios)
-
-            case 2:
-                opInsert = pedir_opcao(config.MENU_ENTIDADES)
-                if opInsert == 0:
-                    continue
-                insert(opInsert)
-
-            case 3:
-                opUpdate = pedir_opcao(config.MENU_ENTIDADES)
-                if opUpdate == 0:
-                    continue
-                update(opUpdate)
-
-            case 4:
-                opDelete = pedir_opcao(config.MENU_ENTIDADES)
-                if opDelete == 0:
-                    continue
-                delete(opDelete)
-
-            case 0:
-                print("Saindo...")
-                break
-
-            case _:
-                print("Inválido. Tente novamente.")
+                print("Opção inválida. Tente novamente.")
                 continue
 
-        input("Pressione Enter para continuar...")
+        input("\nPressione Enter para continuar...")
+        print(tela_inicial.get_updated_screen())
         config.clear_console()
-
 
 
 if __name__ == "__main__":

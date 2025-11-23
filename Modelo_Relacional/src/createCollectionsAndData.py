@@ -2,120 +2,93 @@ from conexion.mongo_queries import MongoQueries
 
 class CreateCollectionsAndData:
     def __init__(self):
-        self.mongo = MongoQueries()
-        self.mongo.connect()
-
-        # Coleções que serão criadas (no singular)
         self.collections = ["leitor", "livro", "emprestimo"]
+        self.mongo = MongoQueries()
 
-    # ---------------------------------------------------------
-    def create_collections(self, drop_if_exists: bool = False):
-        """
-        Cria as coleções no MongoDB.
-        Se drop_if_exists=True, apaga a coleção antiga e recria.
-        """
+    def create_collections(self, drop_if_exists=True):
+        self.mongo.connect()
         existing = self.mongo.db.list_collection_names()
 
         for col in self.collections:
-            if col in existing:
-                if drop_if_exists:
-                    self.mongo.db.drop_collection(col)
-                    print(f"Collection '{col}' removida.")
-                    self.mongo.db.create_collection(col)
-                    print(f"Collection '{col}' recriada.")
-                else:
-                    print(f"Collection '{col}' já existe. (sem alterações)")
-            else:
+            if col in existing and drop_if_exists:
+                self.mongo.db.drop_collection(col)
+                print(f"Collection '{col}' apagada.")
+            if col not in existing or drop_if_exists:
                 self.mongo.db.create_collection(col)
                 print(f"Collection '{col}' criada.")
 
-    # ---------------------------------------------------------
-    def insert_initial_data(self):
-        """
-        Insere dados iniciais nas coleções.
-        Esses dados imitam as tabelas originais do projeto relacional.
-        """
+        self.mongo.close()
 
-        # ---- Dados de Leitor ----
+    def insert_initial_data(self):
+        self.mongo.connect()
+
+        # -----------------------------------------------------------
+        # SEED DE LEITORES
         leitores = [
             {
-                "nome": "Maria Silva",
-                "cpf": "123.456.789-00",
+                "id_leitor": 1,
+                "nome": "João Silva",
+                "cpf": "111.111.111-11",
                 "telefone": "(27) 99999-1111",
-                "email": "maria.silva@example.com"
+                "email": "joao@example.com"
             },
             {
-                "nome": "João Pedro",
-                "cpf": "987.654.321-00",
+                "id_leitor": 2,
+                "nome": "Maria Souza",
+                "cpf": "222.222.222-22",
                 "telefone": "(27) 98888-2222",
-                "email": "joao.pedro@example.com"
-            },
-            {
-                "nome": "Ana Oliveira",
-                "cpf": "111.222.333-44",
-                "telefone": "(27) 97777-3333",
-                "email": "ana.oliveira@example.com"
+                "email": "maria@example.com"
             }
         ]
 
-        # ---- Dados de Livro ----
+        # -----------------------------------------------------------
+        # SEED DE LIVROS
         livros = [
             {
+                "id_livro": 1,
                 "titulo": "Dom Casmurro",
                 "autor": "Machado de Assis",
-                "editora": "Globo",
+                "editora": "Editora A",
                 "categoria": "Romance",
-                "quantidade": 3
+                "quantidade": 5
             },
             {
-                "titulo": "O Hobbit",
-                "autor": "J. R. R. Tolkien",
-                "editora": "Harper",
+                "id_livro": 2,
+                "titulo": "Harry Potter",
+                "autor": "J.K. Rowling",
+                "editora": "Rocco",
                 "categoria": "Fantasia",
-                "quantidade": 2
-            },
-            {
-                "titulo": "1984",
-                "autor": "George Orwell",
-                "editora": "Companhia das Letras",
-                "categoria": "Distopia",
-                "quantidade": 4
+                "quantidade": 3
             }
         ]
 
-        # ---- Dados de Emprestimo (referências simples) ----
-        # OBS: normalmente inclui o ObjectId real do leitor/livro
-        # mas aqui deixamos para o CRUD gerar corretamente
+        # -----------------------------------------------------------
+        # SEED DE EMPRÉSTIMOS
         emprestimos = [
             {
-                "id_leitor_fake": "Maria Silva",
-                "id_livro_fake": "Dom Casmurro",
-                "data_emprestimo": "2024-11-01",
-                "data_devolucao_prevista": "2024-11-10",
-                "data_devolucao_realizada": None
+                "id_emprestimo": 1,
+                "id_leitor": 1,
+                "id_livro": 2,
+                "data_emprestimo": "2025-01-10",
+                "data_devolucao_prevista": "2025-01-20",
+                "data_devolucao_realizada": "-"
             }
         ]
 
-        # Inserção nas coleções
         self.mongo.db["leitor"].insert_many(leitores)
         self.mongo.db["livro"].insert_many(livros)
         self.mongo.db["emprestimo"].insert_many(emprestimos)
 
-        print("Dados iniciais inseridos com sucesso.")
-
-    # ---------------------------------------------------------
-    def run(self):
-        """Executa todo o processo de criação e inserção."""
-        print("Criando coleções...")
-        self.create_collections(drop_if_exists=True)
-
-        print("\nInserindo dados iniciais...")
-        self.insert_initial_data()
+        print("\nDados iniciais inseridos com sucesso!")
 
         self.mongo.close()
-        print("\nProcesso concluído!")
 
+    def run(self):
+        print("Criando coleções...")
+        self.create_collections()
+        print("\nInserindo dados...")
+        self.insert_initial_data()
+        print("\nProcesso concluído com sucesso!")
 
-# Execução direta
 if __name__ == "__main__":
     CreateCollectionsAndData().run()
