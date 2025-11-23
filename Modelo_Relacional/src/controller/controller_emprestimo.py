@@ -1,84 +1,182 @@
-from model.emprestimo import Emprestimo
+from datetime import datetime, date
+from conexion.mongo_queries import MongoQueries
 from model.leitor import Leitor
 from model.livro import Livro
-from conexion.mysql_queries import MySQLQueries
+from model.emprestimo import Emprestimo
 
 class ControllerEmprestimo:
     def __init__(self):
-        pass
+        self.mongo = MongoQueries()
 
-    def registrar_emprestimo(self) -> Emprestimo:
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
+    # ---------------------------------------
+    # AUXILIAR — verifica existência por ID
+    # ---------------------------------------
+    def existe_emprestimo(self, id_emprestimo: int) -> bool:
+        self.mongo.connect()
+        result = self.mongo.db["emprestimo"].find_one({"id_emprestimo": id_emprestimo})
+        self.mongo.close()
+        return result is not None
 
+    def existe_leitor(self, id_leitor: int) -> dict:
+        self.mongo.connect()
+        leitor = self.mongo.db["leitor"].find_one({"id_leitor": id_leitor})
+        self.mongo.close()
+        return leitor
+
+    def existe_livro(self, id_livro: int) -> dict:
+        self.mongo.connect()
+        livro = self.mongo.db["livro"].find_one({"id_livro": id_livro})
+        self.mongo.close()
+        return livro
+
+    # ---------------------------------------
+    # CREATE — CADASTRAR EMPRÉSTIMO
+    # ---------------------------------------
+    def cadastrar_emprestimo(self) -> Emprestimo:
         try:
-            id_leitor = input("Digite o ID do leitor: ")
-            id_livro = input("Digite o ID do livro: ")
-            data_emprestimo = input("Data do empréstimo (YYYY-MM-DD): ")
-            data_devolucao_prevista = input("Data prevista de devolução (YYYY-MM-DD): ")
-            data_devolucao_realizada = input("Data da devolução realizada (YYYY-MM-DD) :")
+            id_leitor = int(input("ID do leitor: "))
+            id_livro = int(input("ID do livro: "))
 
-            # Insere os dados no banco
-            query = f"""
-                INSERT INTO emprestimo (
-                    id_leitor, id_livro, data_emprestimo, data_devolucao_prevista, data_devolucao_realizada
-                ) VALUES (
-                    {id_leitor}, {id_livro}, '{data_emprestimo}', '{data_devolucao_prevista}', '{data_devolucao_realizada}'
-                );
-            """
-            mysql.execute_dml(query)
-            print("Empréstimo registrado com sucesso.")
+            leitor_db = self.existe_leitor(id_leitor)
+            livro_db = self.existe_livro(id_livro)
 
-            # Cria objeto para representar o empréstimo no sistema
-            emprestimo = Emprestimo(
-                id_emprestimo=None,
-                leitor=Leitor(id_leitor),
-                livro=Livro(id_livro),
-                data_emprestimo=data_emprestimo,
-                data_devolucao_prevista=data_devolucao_prevista,
-                data_devolucao_realizada=data_devolucao_realizada
+            if leitor_db is None:
+                print("Leitor não encontrado.")
+                return None
+            if livro_db is None:
+                print("Livro não encontrado.")
+                return None
+
+            # Gerar id_emprestimo igual ao AUTO_INCREMENT do MySQL
+            self.mongo.connect()
+            ultimo = self.mongo.db["emprestimo"].find_one(sort=[("id_emprestimo", -1)])
+            novo_id = 1 if ultimo is None else ultimo["id_emprestimo"] + 1
+
+            data_emprestimo = date.today()
+            data_prevista = date.fromisoformat(
+                input("Data prevista de devolução (AAAA-MM-DD): ")
             )
+
+            self.mongo.db["emprestimo"].insert_one({
+                "id_emprestimo": novo_id,
+                "id_leitor": id_leitor,
+                "id_livro": id_livro,
+                "data_emprestimo": str(data_emprestimo),
+                "data_devolucao_prevista": str(data_prevista),
+                "data_devolucao_realizada": None
+            })
+            self.mongo.close()
+
+            # Criar objetos para retorno
+            leitor_obj = Leitor(
+                leitor_db["id_leitor"],
+                leitor_db["nome"],
+                leitor_db["cpf"],
+                leitor_db["telefone"],
+                leitor_db["email"]
+            )
+
+            livro_obj = Livro(
+                livro_db["id_livro"],
+                livro_db["titulo"],
+                livro_db["autor"],
+                livro_db["editora"],
+                livro_db["categoria"],
+                livro_db["quantidade"]
+            )
+
+            emprestimo = Emprestimo(
+                novo_id,
+                leitor_obj,
+                livro_obj,
+                data_emprestimo,
+                data_prevista,
+                None
+            )
+
+            print("\nEmpréstimo cadastrado com sucesso!")
             print(emprestimo.to_string())
             return emprestimo
 
         except Exception as e:
-            print(f"Erro ao registrar empréstimo: {e}")
-        finally:
-            mysql.close()
+            print(f"Erro ao cadastrar empréstimo: {e}")
 
-    # ---------------------------------------------------------------------
-    def devolver_livro(self):
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
-
+    # ---------------------------------------
+    # UPDATE — Registrar devolução
+    # ---------------------------------------
+    def atualizar_emprestimo(self) -> Emprestimo:
         try:
-            id_emprestimo = input("Digite o ID do empréstimo: ")
-            data_real = input("Data real de devolução (YYYY-MM-DD): ")
+            id_emprestimo = int(input("ID do empréstimo para atualizar: "))
 
-            query = f"""
-                UPDATE emprestimo
-                SET data_devolucao_realizada = '{data_real}'
-                WHERE id_emprestimo = {id_emprestimo};
-            """
-            mysql.execute_dml(query)
-            print("Devolução registrada com sucesso.")
+            if not self.existe_emprestimo(id_emprestimo):
+                print("Empréstimo não encontrado.")
+                return None
+
+            data_devolucao = date.fromisoformat(
+                input("Data de devolução REALIZADA (AAAA-MM-DD): ")
+            )
+
+            self.mongo.connect()
+            self.mongo.db["emprestimo"].update_one(
+                {"id_emprestimo": id_emprestimo},
+                {"$set": {"data_devolucao_realizada": str(data_devolucao)}}
+            )
+            emp = self.mongo.db["emprestimo"].find_one({"id_emprestimo": id_emprestimo})
+            self.mongo.close()
+
+            # Buscar dados do leitor e livro
+            leitor_db = self.existe_leitor(emp["id_leitor"])
+            livro_db = self.existe_livro(emp["id_livro"])
+
+            leitor_obj = Leitor(
+                leitor_db["id_leitor"],
+                leitor_db["nome"],
+                leitor_db["cpf"],
+                leitor_db["telefone"],
+                leitor_db["email"]
+            )
+
+            livro_obj = Livro(
+                livro_db["id_livro"],
+                livro_db["titulo"],
+                livro_db["autor"],
+                livro_db["editora"],
+                livro_db["categoria"],
+                livro_db["quantidade"]
+            )
+
+            emprestimo = Emprestimo(
+                emp["id_emprestimo"],
+                leitor_obj,
+                livro_obj,
+                date.fromisoformat(emp["data_emprestimo"]),
+                date.fromisoformat(emp["data_devolucao_prevista"]),
+                data_devolucao
+            )
+
+            print("\nEmpréstimo atualizado com sucesso!")
+            print(emprestimo.to_string())
+            return emprestimo
+
         except Exception as e:
-            print(f"Erro ao registrar devolução: {e}")
-        finally:
-            mysql.close()
+            print(f"Erro ao atualizar empréstimo: {e}")
 
-    # ---------------------------------------------------------------------
+    # ---------------------------------------
+    # DELETE — Remover empréstimo
+    # ---------------------------------------
     def excluir_emprestimo(self):
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
-
         try:
-            id_emprestimo = input("Digite o ID do empréstimo: ")
+            id_emprestimo = int(input("ID do empréstimo para excluir: "))
 
-            query = f"DELETE FROM emprestimo WHERE id_emprestimo = {id_emprestimo};"
-            mysql.execute_dml(query)
-            print("Empréstimo excluído com sucesso.")
+            if not self.existe_emprestimo(id_emprestimo):
+                print("Empréstimo não encontrado.")
+                return
+
+            self.mongo.connect()
+            self.mongo.db["emprestimo"].delete_one({"id_emprestimo": id_emprestimo})
+            self.mongo.close()
+
+            print("\nEmpréstimo excluído com sucesso!")
+
         except Exception as e:
             print(f"Erro ao excluir empréstimo: {e}")
-        finally:
-            mysql.close()

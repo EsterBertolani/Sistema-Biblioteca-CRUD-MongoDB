@@ -1,63 +1,121 @@
+from conexion.mongo_queries import MongoQueries
 from model.livro import Livro
-from conexion.mysql_queries import MySQLQueries
 
 class ControllerLivro:
     def __init__(self):
-        pass
+        self.mongo = MongoQueries()
 
+    # ---------------------------------------
+    # AUXILIAR — verificar existência por título
+    # ---------------------------------------
+    def existe_livro(self, titulo: str) -> bool:
+        self.mongo.connect()
+        result = self.mongo.db["livro"].find_one({"titulo": titulo})
+        self.mongo.close()
+        return result is not None
+
+    # ---------------------------------------
+    # CREATE
+    # ---------------------------------------
     def cadastrar_livro(self) -> Livro:
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
-
         try:
             titulo = input("Digite o título do livro: ")
-            autor = input("Digite o autor do livro: ")
-            editora = input("Digite a editora: ")
-            categoria = input("Digite a categoria: ")
-            quantidade = input("Digite a quantidade: ")
 
-            query = f"""
-                INSERT INTO livro (titulo, autor, editora, categoria, quantidade)
-                VALUES ('{titulo}', '{autor}', '{editora}', '{categoria}', {quantidade});
-            """
-            mysql.execute_dml(query)
-            print("Livro cadastrado com sucesso.")
-            return Livro(None, titulo, autor, editora, categoria, quantidade)
-        finally:
-            mysql.close()
+            if not self.existe_livro(titulo):
+                autor = input("Autor: ")
+                editora = input("Editora: ")
+                categoria = input("Categoria: ")
+                quantidade = int(input("Quantidade disponível: "))
 
+                # Gerando id_livro igual ao AUTO_INCREMENT
+                self.mongo.connect()
+                ultimo = self.mongo.db["livro"].find_one(sort=[("id_livro", -1)])
+                novo_id = 1 if ultimo is None else ultimo["id_livro"] + 1
+
+                self.mongo.db["livro"].insert_one({
+                    "id_livro": novo_id,
+                    "titulo": titulo,
+                    "autor": autor,
+                    "editora": editora,
+                    "categoria": categoria,
+                    "quantidade": quantidade
+                })
+                self.mongo.close()
+
+                livro = Livro(novo_id, titulo, autor, editora, categoria, quantidade)
+                print("\nLivro cadastrado com sucesso!")
+                print(livro.to_string())
+                return livro
+
+            else:
+                print("Livro já cadastrado.")
+                return None
+
+        except Exception as e:
+            print(f"Erro ao cadastrar livro: {e}")
+
+    # ---------------------------------------
+    # UPDATE
+    # ---------------------------------------
     def atualizar_livro(self) -> Livro:
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
-
         try:
-            id_livro = input("Digite o ID do livro a ser atualizado: ")
-            titulo = input("Novo título: ")
-            autor = input("Novo autor: ")
-            editora = input("Nova editora: ")
-            categoria = input("Nova categoria: ")
-            quantidade = input("Nova quantidade: ")
+            titulo = input("Digite o título do livro para atualizar: ")
 
-            query = f"""
-                UPDATE livro
-                SET titulo='{titulo}', autor='{autor}', editora='{editora}',
-                    categoria='{categoria}', quantidade={quantidade}
-                WHERE id_livro = {id_livro};
-            """
-            mysql.execute_dml(query)
-            print("Livro atualizado com sucesso.")
-            return Livro(id_livro, titulo, autor, editora, categoria, quantidade)
-        finally:
-            mysql.close()
+            if self.existe_livro(titulo):
+                autor = input("Novo autor: ")
+                editora = input("Nova editora: ")
+                categoria = input("Nova categoria: ")
+                quantidade = int(input("Nova quantidade: "))
 
+                self.mongo.connect()
+                self.mongo.db["livro"].update_one(
+                    {"titulo": titulo},
+                    {"$set": {
+                        "autor": autor,
+                        "editora": editora,
+                        "categoria": categoria,
+                        "quantidade": quantidade
+                    }}
+                )
+                livro_atualizado = self.mongo.db["livro"].find_one({"titulo": titulo})
+                self.mongo.close()
+
+                livro = Livro(
+                    livro_atualizado["id_livro"],
+                    livro_atualizado["titulo"],
+                    livro_atualizado["autor"],
+                    livro_atualizado["editora"],
+                    livro_atualizado["categoria"],
+                    livro_atualizado["quantidade"]
+                )
+
+                print("\nLivro atualizado com sucesso!")
+                print(livro.to_string())
+                return livro
+
+            else:
+                print("Livro não encontrado.")
+                return None
+
+        except Exception as e:
+            print(f"Erro ao atualizar livro: {e}")
+
+    # ---------------------------------------
+    # DELETE
+    # ---------------------------------------
     def excluir_livro(self):
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
-
         try:
-            id_livro = input("Digite o ID do livro a ser excluído: ")
-            query = f"DELETE FROM livro WHERE id_livro = {id_livro};"
-            mysql.execute_dml(query)
-            print("Livro excluído com sucesso.")
-        finally:
-            mysql.close()
+            titulo = input("Digite o título do livro a ser excluído: ")
+
+            if self.existe_livro(titulo):
+                self.mongo.connect()
+                self.mongo.db["livro"].delete_one({"titulo": titulo})
+                self.mongo.close()
+
+                print("\nLivro excluído com sucesso!")
+
+            else:
+                print("Livro não encontrado.")
+
+        except Exception as e:
+            print(f"Erro ao excluir livro: {e}")

@@ -1,93 +1,123 @@
+from conexion.mongo_queries import MongoQueries
 from model.leitor import Leitor
-from conexion.mysql_queries import MySQLQueries
 
 class ControllerLeitor:
     def __init__(self):
-        pass
+        self.mongo = MongoQueries()
 
+    # ---------------------------------------
+    # AUXILIAR — verifica existência por CPF
+    # ---------------------------------------
+    def existe_leitor(self, cpf: str) -> bool:
+        self.mongo.connect()
+        result = self.mongo.db["leitor"].find_one({"cpf": cpf})
+        self.mongo.close()
+        return result is not None
+
+    # ---------------------------------------
+    # CREATE
+    # ---------------------------------------
     def cadastrar_leitor(self) -> Leitor:
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
-
         try:
             cpf = input("Digite o CPF do leitor: ")
 
-            if not self.existe_leitor(mysql, cpf):
+            if not self.existe_leitor(cpf):
                 nome = input("Digite o nome do leitor: ")
                 telefone = input("Digite o telefone do leitor: ")
                 email = input("Digite o email do leitor: ")
 
-                mysql.execute_dml(
-                    f"""
-                    INSERT INTO leitor (nome, cpf, telefone, email)
-                    VALUES ('{nome}', '{cpf}', '{telefone}', '{email}');
-                    """
+                # Gerando ID igual ao AUTO_INCREMENT do MySQL
+                self.mongo.connect()
+                ultimo = self.mongo.db["leitor"].find_one(sort=[("id_leitor", -1)])
+                novo_id = 1 if ultimo is None else ultimo["id_leitor"] + 1
+
+                self.mongo.db["leitor"].insert_one({
+                    "id_leitor": novo_id,
+                    "nome": nome,
+                    "cpf": cpf,
+                    "telefone": telefone,
+                    "email": email
+                })
+                self.mongo.close()
+
+                novo_leitor = Leitor(
+                    id_leitor=novo_id,
+                    nome=nome,
+                    cpf=cpf,
+                    telefone=telefone,
+                    email=email
                 )
 
-                novo_leitor = Leitor(None, nome, cpf, telefone, email)
-                print("Leitor cadastrado com sucesso!")
+                print("\nLeitor cadastrado com sucesso!")
                 print(novo_leitor.to_string())
                 return novo_leitor
+
             else:
                 print("Leitor já cadastrado.")
                 return None
+
         except Exception as e:
             print(f"Erro ao cadastrar leitor: {e}")
-        finally:
-            mysql.close()
 
+    # ---------------------------------------
+    # UPDATE
+    # ---------------------------------------
     def atualizar_leitor(self) -> Leitor:
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
-
         try:
             cpf = input("Digite o CPF do leitor a ser atualizado: ")
 
-            if self.existe_leitor(mysql, cpf):
+            if self.existe_leitor(cpf):
                 nome = input("Novo nome: ")
                 telefone = input("Novo telefone: ")
                 email = input("Novo email: ")
-                
 
-                mysql.execute_dml(
-                    f"""
-                    UPDATE leitor 
-                    SET nome = '{nome}', telefone = '{telefone}', email = '{email}'
-                    WHERE cpf = '{cpf}';
-                    """
+                self.mongo.connect()
+                self.mongo.db["leitor"].update_one(
+                    {"cpf": cpf},
+                    {"$set": {
+                        "nome": nome,
+                        "telefone": telefone,
+                        "email": email
+                    }}
+                )
+                leitor_atualizado = self.mongo.db["leitor"].find_one({"cpf": cpf})
+                self.mongo.close()
+
+                leitor = Leitor(
+                    leitor_atualizado["id_leitor"],
+                    leitor_atualizado["nome"],
+                    leitor_atualizado["cpf"],
+                    leitor_atualizado["telefone"],
+                    leitor_atualizado["email"]
                 )
 
-                leitor_atualizado = Leitor(None, nome, cpf, telefone, email)
-                print("Leitor atualizado com sucesso!")
-                print(leitor_atualizado.to_string())
-                return leitor_atualizado
+                print("\nLeitor atualizado com sucesso!")
+                print(leitor.to_string())
+                return leitor
+
             else:
                 print("Leitor não encontrado.")
+                return None
+
         except Exception as e:
             print(f"Erro ao atualizar leitor: {e}")
-        finally:
-            mysql.close()
 
+    # ---------------------------------------
+    # DELETE
+    # ---------------------------------------
     def excluir_leitor(self):
-        mysql = MySQLQueries(can_write=True)
-        mysql.connect()
-
         try:
             cpf = input("Digite o CPF do leitor a ser excluído: ")
 
-            if self.existe_leitor(mysql, cpf):
-                mysql.execute_dml(
-                    f"DELETE FROM leitor WHERE cpf = '{cpf}';"
-                )
-                print("Leitor excluído com sucesso.")
+            if self.existe_leitor(cpf):
+                self.mongo.connect()
+                self.mongo.db["leitor"].delete_one({"cpf": cpf})
+                self.mongo.close()
+
+                print("\nLeitor excluído com sucesso!")
+
             else:
                 print("Leitor não encontrado.")
+
         except Exception as e:
             print(f"Erro ao excluir leitor: {e}")
-        finally:
-            mysql.close()
-
-    def existe_leitor(self, mysql: MySQLQueries, cpf: str) -> bool:
-        query = f"SELECT 1 FROM leitor WHERE cpf = '{cpf}';"
-        resultado = mysql.fetch(query)
-        return len(resultado) > 0
