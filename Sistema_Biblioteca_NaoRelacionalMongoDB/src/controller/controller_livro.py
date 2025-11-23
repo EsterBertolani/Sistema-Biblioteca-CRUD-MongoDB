@@ -1,6 +1,7 @@
 from conexion.mongo_queries import MongoQueries
 from model.livro import Livro
 
+
 class ControllerLivro:
     def __init__(self):
         self.mongo = MongoQueries()
@@ -29,7 +30,8 @@ class ControllerLivro:
 
                 # Gerando id_livro igual ao AUTO_INCREMENT
                 self.mongo.connect()
-                ultimo = self.mongo.db["livro"].find_one(sort=[("id_livro", -1)])
+                ultimo = self.mongo.db["livro"].find_one(
+                    sort=[("id_livro", -1)])
                 novo_id = 1 if ultimo is None else ultimo["id_livro"] + 1
 
                 self.mongo.db["livro"].insert_one({
@@ -42,7 +44,8 @@ class ControllerLivro:
                 })
                 self.mongo.close()
 
-                livro = Livro(novo_id, titulo, autor, editora, categoria, quantidade)
+                livro = Livro(novo_id, titulo, autor,
+                              editora, categoria, quantidade)
                 print("\nLivro cadastrado com sucesso!")
                 print(livro.to_string())
                 return livro
@@ -77,7 +80,8 @@ class ControllerLivro:
                         "quantidade": quantidade
                     }}
                 )
-                livro_atualizado = self.mongo.db["livro"].find_one({"titulo": titulo})
+                livro_atualizado = self.mongo.db["livro"].find_one(
+                    {"titulo": titulo})
                 self.mongo.close()
 
                 livro = Livro(

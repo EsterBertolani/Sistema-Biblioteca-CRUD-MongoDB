@@ -1,6 +1,7 @@
 from conexion.mongo_queries import MongoQueries
 from model.leitor import Leitor
 
+
 class ControllerLeitor:
     def __init__(self):
         self.mongo = MongoQueries()
@@ -28,7 +29,8 @@ class ControllerLeitor:
 
                 # Gerando ID igual ao AUTO_INCREMENT do MySQL
                 self.mongo.connect()
-                ultimo = self.mongo.db["leitor"].find_one(sort=[("id_leitor", -1)])
+                ultimo = self.mongo.db["leitor"].find_one(
+                    sort=[("id_leitor", -1)])
                 novo_id = 1 if ultimo is None else ultimo["id_leitor"] + 1
 
                 self.mongo.db["leitor"].insert_one({
@@ -80,7 +82,8 @@ class ControllerLeitor:
                         "email": email
                     }}
                 )
-                leitor_atualizado = self.mongo.db["leitor"].find_one({"cpf": cpf})
+                leitor_atualizado = self.mongo.db["leitor"].find_one({
+                                                                     "cpf": cpf})
                 self.mongo.close()
 
                 leitor = Leitor(

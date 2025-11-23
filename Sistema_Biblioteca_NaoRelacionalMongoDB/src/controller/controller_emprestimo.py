@@ -49,7 +49,7 @@ class ControllerEmprestimo:
                 print("Livro não encontrado.")
                 return
 
-            # VALIDAR ESTOQUE
+            # Validar estoque
             if livro_db["quantidade"] <= 0:
                 print("Este livro está sem unidades disponíveis para empréstimo.")
                 return
@@ -75,7 +75,7 @@ class ControllerEmprestimo:
                 "data_devolucao_realizada": None
             })
 
-            # DECREMENTAR QUANTIDADE DO LIVRO
+            # Decrementar quantidade do livro
             self.mongo.db["livro"].update_one(
                 {"id_livro": id_livro},
                 {"$inc": {"quantidade": -1}}
@@ -98,7 +98,7 @@ class ControllerEmprestimo:
                 livro_db["autor"],
                 livro_db["editora"],
                 livro_db["categoria"],
-                livro_db["quantidade"] - 1  # já emprestou 1
+                livro_db["quantidade"] - 1  # já foi emprestado 1
             )
 
             emprestimo = Emprestimo(
@@ -133,6 +133,7 @@ class ControllerEmprestimo:
             )
 
             self.mongo.connect()
+            # Atualizar a devolução
             self.mongo.db["emprestimo"].update_one(
                 {"id_emprestimo": id_emprestimo},
                 {"$set": {"data_devolucao_realizada": str(data_devolucao)}}
@@ -141,7 +142,7 @@ class ControllerEmprestimo:
             emp = self.mongo.db["emprestimo"].find_one(
                 {"id_emprestimo": id_emprestimo})
 
-            # ⚠ INCREMENTAR QUANTIDADE DO LIVRO
+            # Incrementar quantidade do livro
             self.mongo.db["livro"].update_one(
                 {"id_livro": emp["id_livro"]},
                 {"$inc": {"quantidade": 1}}
@@ -193,29 +194,27 @@ class ControllerEmprestimo:
         try:
             id_emprestimo = int(input("ID do empréstimo para excluir: "))
 
-            emp = None
-            if self.existe_emprestimo(id_emprestimo):
-                # Pegar o empréstimo antes de apagar
-                self.mongo.connect()
-                emp = self.mongo.db["emprestimo"].find_one(
-                    {"id_emprestimo": id_emprestimo})
-
-                # Excluir o empréstimo
-                self.mongo.db["emprestimo"].delete_one(
-                    {"id_emprestimo": id_emprestimo})
-
-                # ⚠ DEVOLVER A QUANTIDADE DO LIVRO
-                self.mongo.db["livro"].update_one(
-                    {"id_livro": emp["id_livro"]},
-                    {"$inc": {"quantidade": 1}}
-                )
-
-                self.mongo.close()
-
-                print("\nEmpréstimo excluído com sucesso!")
-
-            else:
+            if not self.existe_emprestimo(id_emprestimo):
                 print("Empréstimo não encontrado.")
+                return
+
+            self.mongo.connect()
+            emp = self.mongo.db["emprestimo"].find_one(
+                {"id_emprestimo": id_emprestimo})
+
+            # Excluir o empréstimo
+            self.mongo.db["emprestimo"].delete_one(
+                {"id_emprestimo": id_emprestimo})
+
+            # Devolver a quantidade do livro
+            self.mongo.db["livro"].update_one(
+                {"id_livro": emp["id_livro"]},
+                {"$inc": {"quantidade": 1}}
+            )
+
+            self.mongo.close()
+
+            print("\nEmpréstimo excluído com sucesso!")
 
         except Exception as e:
             print(f"Erro ao excluir empréstimo: {e}")
