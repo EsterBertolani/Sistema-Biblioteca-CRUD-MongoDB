@@ -1,131 +1,181 @@
-# Exemplo de Sistema em Python fazendo CRUD no MongoDB
+# Sistema de Gerenciamento de Biblioteca Escolar - Python integrado com MongoDB
 
-Esse sistema de exemplo é composto por um conjunto de coleções(collections) que representam pedidos de vendas, contendo coleções como: clientes, fornecedores, produtos, pedidos e itens de pedido.
+### Informações:
 
-O sistema exige que as coleções existam, então basta executar o script Python a seguir para criação das coleções e preenchimento de dados de exemplos:
-```shell
-~$ python createCollectionsAndData.py
+**Integrantes:** Alexsander Borchardt, Ester Bertolani, João Paulo Poubel, Marcelo Mindas, Vanderson de Almeida
+
+**Disciplina:** Banco de Dados Não Relacional
+
+**Professor:** Howard Roatti Cruz
+
+**Turma:** 4HC1A
+
+**Vídeo de apresentação:** [Link do Vídeo - Atualizar]
+
+## Descrição do Projeto
+
+O **Sistema de Biblioteca** tem como objetivo gerenciar o cadastro de leitores, livros e empréstimos, permitindo o controle completo das operações de uma biblioteca acadêmica.
+
+O sistema foi refatorado para utilizar **Python** com integração ao banco de dados **MongoDB**, substituindo o modelo relacional rígido por uma abordagem baseada em documentos. Isso permite maior flexibilidade na manipulação dos dados.
+
+O sistema implementa:
+
+* **CRUD completo** (Create, Read, Update, Delete) para:
+    * *Leitores*
+    * *Livros*
+    * *Empréstimos*
+* **Relatórios automatizados** utilizando *Aggregation Framework* do Mongo:
+    1. *Relatório de empréstimos detalhados (usando $lookup para simular JOIN)*
+    2. *Relatório de livros mais emprestados (usando $group e $sum)*
+
+## Estrutura do Projeto
+
+````
+.
+├── src/
+│   ├── conexion/                           # Conexão com o Banco de Dados
+│   │   ├── mongo_queries.py
+│   │   └── passphrase/
+│   │       └── authentication.mongo        # Configuração de Acesso (Local ou Auth)
+│   ├── controller/                         # Controladores (Regras de Negócio)
+│   │   ├── controller_leitor.py
+│   │   ├── controller_livro.py
+│   │   └── controller_emprestimo.py
+│   ├── model/                              # Classes de Domínio (Objetos)
+│   │   ├── leitor.py
+│   │   ├── livro.py
+│   │   └── emprestimo.py
+│   ├── reports/                            # Relatórios (Aggregation Pipelines)
+│   │   └── relatorios.py
+│   ├── utils/                              # Utilitários
+│   │   ├── config.py                       # Menus e limpeza de tela
+│   │   └── splash_screen.py                # Tela inicial com contadores
+│   ├── createCollectionsAndData.py         # Script para criar coleções e dados iniciais
+│   ├── principal.py                        # Interface principal (Menu)
+│   └── requirements.txt                    # Dependências do projeto
+├── .gitignore
+├── LICENSE
+└── README.md
+
+````
+
+## Requisitos do Ambiente
+
+### Software Necessário:
+
+* **Python 3.10+** instalado no sistema
+* **MongoDB** (Serviço local ou Docker container)
+* **VS Code** (ou editor de preferência)
+
+### Dependências
+
+Listadas em `src/requirements.txt`. A principal biblioteca utilizada é o `pymongo`.
+
+## Execução do Projeto no Linux
+
+Siga os passos abaixo para rodar o projeto no terminal do Linux ou WSL.
+
+#### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/EsterBertolani/Sistema-Biblioteca-CRUD-MongoDB.git
+
+cd Sistema-Biblioteca-CRUD-MongoDB
+````
+
+#### 2. Criar e ativar o ambiente virtual
+
+```bash
+python3 -m venv venv
+
+source venv/bin/activate
 ```
-**Atenção: tendo em vista que esse projeto é continuidade do [example_crud_oracle](https://github.com/howardroatti/example_crud_oracle), é importante que as tabelas do Oracle existam e estejam preenchidas, pois o script _createCollectionsAndData.py_ irá realizar uma consulta em cada uma das tabelas e preencher as _collections_ com os novos _documents_.**
 
-Para executar o sistema basta executar o script Python a seguir:
-```shell
-~$ python principal.py
+#### 3. Instalar dependências
+
+```bash
+pip install -r src/requirements.txt
 ```
 
-## Organização
-- [diagrams](diagrams): Nesse diretório está o [diagrama relacional](diagrams/DIAGRAMA_RELACIONAL_PEDIDOS.pdf) (lógico) do sistema.
-    * O sistema possui cinco entidades: PRODUTOS, CLIENTES, FORNECEDORES, PEDIDOS e ITENS_PEDIDO
-- [src](src): Nesse diretório estão os scripts do sistema
-    * [conexion](src/conexion): Nesse repositório encontra-se o [módulo de conexão com o banco de dados Oracle](src/conexion/oracle_queries.py) e o [módulo de conexão com o banco de dados Mongo](src/conexion/mongo_queries.py). Esses módulos possuem algumas funcionalidades úteis para execução de instruções. O módulo do Oracle permite obter como resultado das queries JSON, Matriz e Pandas DataFrame. Já o módulo do Mongo apenas realiza a conexão, os métodos CRUD e de recuperação de dados são implementados diretamente nos objetos controladores (_Controllers_) e no objeto de Relatório (_reports_).
-      - Exemplo de utilização para consultas simples no Oracle:
+#### 4. Configurar a Conexão com o MongoDB
 
-        ```python
-        def listar_clientes(self, oracle:OracleQueries, need_connect:bool=False):
-            query = """
-                    select c.cpf
-                        , c.nome 
-                    from clientes c
-                    order by c.nome
-                    """
-            if need_connect:
-                oracle.connect()
-            print(oracle.sqlToDataFrame(query))
-        ```
-      - Exemplo de utilização para alteração de registros no Oracle
+O sistema utiliza uma **Connection String (URI)** padrão para se conectar ao banco. Isso permite flexibilidade para conectar localmente, em containers Docker ou na nuvem (Atlas).
 
-        ```python
-        from conexion.oracle_queries import OracleQueries
-        def inserir_cliente(self) -> Cliente:
-            # Cria uma nova conexão com o banco que permite alteração
-            oracle = OracleQueries(can_write=True)
-            oracle.connect()
+Edite o arquivo de configuração:
+```bash
+nano src/conexion/passphrase/authentication.mongo
+````
 
-            # Solicita ao usuario o novo CPF
-            cpf = input("CPF (Novo): ")
+Você deve colar a **URL de conexão completa** dentro deste arquivo.
 
-            if self.verifica_existencia_cliente(oracle, cpf):
-                # Solicita ao usuario o novo nome
-                nome = input("Nome (Novo): ")
-                # Insere e persiste o novo cliente
-                oracle.write(f"insert into clientes values ('{cpf}', '{nome}')")
-                # Recupera os dados do novo cliente criado transformando em um DataFrame
-                df_cliente = oracle.sqlToDataFrame(f"select cpf, nome from clientes where cpf = '{cpf}'")
-                # Cria um novo objeto Cliente
-                novo_cliente = Cliente(df_cliente.cpf.values[0], df_cliente.nome.values[0])
-                # Exibe os atributos do novo cliente
-                print(novo_cliente.to_string())
-                # Retorna o objeto novo_cliente para utilização posterior, caso necessário
-                return novo_cliente
-            else:
-                print(f"O CPF {cpf} já está cadastrado.")
-                return None
-        ```
-      - Caso esteja utilizando na máquina virtual antiga, você precisará alterar o método connect de:
-          ```python
-          self.conn = cx_Oracle.connect(user=self.user,
-                                  password=self.passwd,
-                                  dsn=self.connectionString()
-                                  )
-          ```
-        Para:
-          ```python
-          self.conn = cx_Oracle.connect(user=self.user,
-                                  password=self.passwd,
-                                  dsn=self.connectionString(in_container=True)
-                                  )
-          ```
-      - Exemplo de utilização para conexão no Mongo;
-      ```python
-            # Importa o módulo MongoQueries
-            from conexion.mongo_queries import MongoQueries
-            
-            # Cria o objeto MongoQueries
-            mongo = MongoQueries()
+  * **Opção A - MongoDB Local (Padrão):**
+    Se você está rodando o Mongo na sua própria máquina (sem senha), use:
 
-            # Realiza a conexão com o Mongo
-            mongo.connect()
+    ```text
+    mongodb://localhost:27017/
+    ```
 
-            """<inclua aqui suas declarações>"""
+  * **Opção B - MongoDB com Autenticação (Docker):**
+    Se estiver usando um banco com senha, o formato deve ser:
+    `mongodb://usuario:senha@host:porta/`
 
-            # Fecha a conexão com o Mong
-            mongo.close()
-      ```
-      - Exemplo de criação de um documento no Mongo:
-      ```python
-            from conexion.mongo_queries import MongoQueries
-            import pandas as pd
-            
-            # Cria o objeto MongoQueries
-            mongo = MongoQueries()
+    Exemplo (para usuário `root` e senha `minhasenha123`):
 
-            # Realiza a conexão com o Mongo
-            mongo.connect()
+    ```text
+    mongodb://root:minhasenha123@localhost:27017/
+    ```
 
-            # Solicita ao usuario o novo CPF
-            cpf = input("CPF (Novo): ")
-            # Solicita ao usuario o novo nome
-            nome = input("Nome (Novo): ")
-            # Insere e persiste o novo cliente
-            mongo.db["clientes"].insert_one({"cpf": cpf, "nome": nome})
-            # Recupera os dados do novo cliente criado transformando em um DataFrame
-            df_cliente = pd.DataFrame(list(mongo.db["clientes"].find({"cpf":f"{cpf}"}, {"cpf": 1, "nome": 1, "_id": 0})))
-            # Exibe os dados do cliente em formato DataFrame
-            print(df_cliente)
 
-            # Fecha a conexão com o Mong
-            mongo.close()
-      ```
-    * [controller](src/controller/): Nesse diretório encontram-sem as classes controladoras, responsáveis por realizar inserção, alteração e exclusão dos registros das tabelas.
-    * [model](src/model/): Nesse diretório encontram-ser as classes das entidades descritas no [diagrama relacional](diagrams/DIAGRAMA_RELACIONAL_PEDIDOS.pdf)
-    * [reports](src/reports/) Nesse diretório encontra-se a [classe](src/reports/relatorios.py) responsável por gerar todos os relatórios do sistema
-    * [utils](src/utils/): Nesse diretório encontram-se scripts de [configuração](src/utils/config.py) e automatização da [tela de informações iniciais](src/utils/splash_screen.py)
-    * [createCollectionsAndData.py](src/createCollectionsAndData.py): Script responsável por criar as tabelas e registros fictícios. Esse script deve ser executado antes do script [principal.py](src/principal.py) para gerar as tabelas, caso não execute os scripts diretamente no SQL Developer ou em alguma outra IDE de acesso ao Banco de Dados.
-    * [principal.py](src/principal.py): Script responsável por ser a interface entre o usuário e os módulos de acesso ao Banco de Dados. Deve ser executado após a criação das tabelas.
+#### 5. Criar coleções e inserir dados iniciais
 
-### Bibliotecas Utilizadas
-- [requirements.txt](src/requirements.txt): `pip install -r requirements.txt`
+Antes de rodar o sistema, execute o script que popula o banco, criando as coleções e inserindo dados de exemplo.
 
-## Contato
-- [LinkedIn](https://linkedin.com/in/howardroatti)
-- [E-Mail](mailto:howardcruzroatti@gmail.com)
+```bash
+python3 src/createCollectionsAndData.py
+```
+
+> *Mensagem esperada: "Dados iniciais inseridos com sucesso\!"*
+
+#### 6. Executar o sistema principal
+
+```bash
+python3 src/principal.py
+```
+
+O menu principal será exibido após a splash screen:
+
+```text
+############################################################
+#                     MENU PRINCIPAL                       #
+############################################################
+#                                                          #
+#    1 - RELATÓRIOS                                        #
+#    2 - INSERIR REGISTROS                                 #
+#    3 - ATUALIZAR REGISTROS                               #
+#    4 - REMOVER REGISTROS                                 #
+#    0 - SAIR                                              #
+#                                                          #
+############################################################
+```
+
+## Relatórios Implementados
+
+1.  **Relatório de Empréstimos Detalhados:**
+    Utiliza o pipeline `$lookup` para buscar dados das coleções `leitor` e `livro` e exibir os nomes em vez dos IDs nos empréstimos.
+
+2.  **Relatório de Livros Mais Emprestados:**
+    Utiliza o pipeline `$group` para contar quantas vezes cada livro aparece na coleção de empréstimos e ordena de forma decrescente.
+
+## Solução de Problemas Comuns
+
+  * **Erro:** `pymongo.errors.ServerSelectionTimeoutError`
+
+    > **Causa:** O MongoDB não está rodando ou o endereço/porta está errado.
+    > **Solução:** Verifique se o serviço do Mongo está ativo (`sudo service mongod status` ou `docker ps`).
+
+  * **Erro:** `ModuleNotFoundError: No module named 'conexion'`
+
+    > **Causa:** Você está tentando rodar o script de dentro da pasta `src` sem configurar o path, ou da raiz incorretamente.
+    > **Solução:** Execute sempre a partir da raiz do projeto usando `python3 src/principal.py`.
+
+-----
