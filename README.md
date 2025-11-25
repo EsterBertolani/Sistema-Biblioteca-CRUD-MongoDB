@@ -4,181 +4,178 @@
 
 **Integrantes:** Alexsander Borchardt, Ester Bertolani, João Paulo Poubel, Marcelo Mindas, Vanderson de Almeida
 
-**Disciplina:** Banco de Dados
+**Disciplina:** Banco de Dados Não Relacional
 
 **Professor:** Howard Roatti Cruz
 
 **Turma:** 4HC1A
 
-**Vídeo de apresentação:** https://www.youtube.com/watch?v=94U1pQSlAb8 <-- video antigo (atualizar)
-
+**Vídeo de apresentação:** [Link do Vídeo - Atualizar]
 
 ## Descrição do Projeto
 
 O **Sistema de Biblioteca** tem como objetivo gerenciar o cadastro de leitores, livros e empréstimos, permitindo o controle completo das operações de uma biblioteca acadêmica.
 
-O sistema foi desenvolvido em **Python**, com integração ao **banco de dados MongoDB**, simulando um sistema real de CRUD completo com persistência de dados, relatórios e controle de registros.
+O sistema foi refatorado para utilizar **Python** com integração ao banco de dados **MongoDB**, substituindo o modelo relacional rígido por uma abordagem baseada em documentos. Isso permite maior flexibilidade na manipulação dos dados.
 
 O sistema implementa:
 
-   * **CRUD completo** (Create, Read, Update, Delete) para:
-      * *Leitores*
-      * *Livros*
-      * *Empréstimos*
+* **CRUD completo** (Create, Read, Update, Delete) para:
+    * *Leitores*
+    * *Livros*
+    * *Empréstimos*
+* **Relatórios automatizados** utilizando *Aggregation Framework* do Mongo:
+    1. *Relatório de empréstimos detalhados (usando $lookup para simular JOIN)*
+    2. *Relatório de livros mais emprestados (usando $group e $sum)*
 
-   * **Relatórios automatizados**, como:
-      1. *Relatório de empréstimos detalhados (JOIN entre tabelas)*
-      2. *Relatório de livros mais emprestados (GROUP BY)*
+## Estrutura do Projeto
 
-## Estrutura do Projeto_
+```
 
-   ```
-   .
-   ├── src/
-   │   ├── conexion/                               # Conexão com o banco de dados
-   │   │   ├── mysql_queries.py
-   │   │   └── passphrase/
-   │   │       ├── authentication.mysql            # Credenciais do MySQL
-   │   │       └── authentication.mongo            # Credenciais do Mongo
-   │   ├── controller/                             # Controladores CRUD
-   │   │   ├── controller_leitor.py
-   │   │   ├── controller_livro.py
-   │   │   └── controller_emprestimo.py
-   │   ├── model/                                  # Classes de domínio (OOP)
-   │   │   ├── leitor.py
-   │   │   ├── livro.py
-   │   │   └── emprestimo.py
-   │   ├── reports/                                # Relatórios e exibição
-   │   │   └── relatorios.py
-   │   ├── utils/                                  # Funções auxiliares
-   │   │   ├── config.py
-   │   │   └── splash_screen.py
-   │   ├── createCollectionsAndData.py             # Cria as coleções de dados do banco não relacional
-   │   ├── principal.py                            # Menu principal da aplicação
-   │   └── requirements.txt                        # Dependências Python
-   ├── .gitignore
-   ├── LICENSE
-   └── README.md
-   ```
+.
+├── src/
+│   ├── conexion/                           # Conexão com o Banco de Dados
+│   │   ├── mongo_queries.py
+│   │   └── passphrase/
+│   │       └── authentication.mongo        # Configuração de Acesso (Local ou Auth)
+│   ├── controller/                         # Controladores (Regras de Negócio)
+│   │   ├── controller_leitor.py
+│   │   ├── controller_livro.py
+│   │   └── controller_emprestimo.py
+│   ├── model/                              # Classes de Domínio (Objetos)
+│   │   ├── leitor.py
+│   │   ├── livro.py
+│   │   └── emprestimo.py
+│   ├── reports/                            # Relatórios (Aggregation Pipelines)
+│   │   └── relatorios.py
+│   ├── utils/                              # Utilitários
+│   │   ├── config.py                       # Menus e limpeza de tela
+│   │   └── splash_screen.py                # Tela inicial com contadores
+│   ├── createCollectionsAndData.py         # Script para criar coleções e dados iniciais
+│   ├── principal.py                        # Interface principal (Menu)
+│   └── requirements.txt                    # Dependências do projeto
+├── .gitignore
+├── LICENSE
+└── README.md
+
+````
 
 ## Requisitos do Ambiente
 
-   ### Software Necessário:
+### Software Necessário:
 
-   * **Python 3.10+** instalado no sistema
-   * **MySQL Server** configurado e rodando localmente
-   * **VS Code**
+* **Python 3.10+** instalado no sistema
+* **MongoDB** (Serviço local ou Docker container)
+* **VS Code** (ou editor de preferência)
 
+### Dependências
 
-   Dependências listadas em:
-
-
-      src/requirements.txt
-   
-   
-   Instale as dependências com:
-
-
-      pip install -r src/requirements.txt
-
-
+Listadas em `src/requirements.txt`. A principal biblioteca utilizada é o `pymongo`.
 
 ## Execução do Projeto no Linux
 
-   #### 1. Clonar o repositório
+Siga os passos abaixo para rodar o projeto no terminal do Linux ou WSL.
 
-      git clone https://github.com/MarceloMindas/sistema_biblioteca.git
-      cd sistema_biblioteca
+#### 1. Clonar o repositório
 
-   #### 2. Criar e ativar ambiente virtual
+```bash
+git clone https://github.com/EsterBertolani/Sistema-Biblioteca-CRUD-MongoDB.git
 
-      python3 -m venv venv
-      source venv/bin/activate
+cd Sistema-Biblioteca-CRUD-MongoDB
+````
 
+#### 2\. Criar e ativar o ambiente virtual
 
-   #### 3. Instalar dependências
+```bash
+python3 -m venv venv
 
-      pip install -r src/requirements.txt
+source venv/bin/activate
+```
 
+#### 3\. Instalar dependências
 
-   #### 4. Configurar autenticação com o MySQL
+```bash
+pip install -r src/requirements.txt
+```
 
-   * Edite o arquivo:
-      ```  
-      nano src/conexion/passphrase/authentication.mysql
-      ```
+#### 4\. Configurar a Conexão com o MongoDB
 
-   * Adicione suas credenciais no formato:
-      ```
-      usuario,senha
-      ```
-   
-   > Exemplo:
+O sistema suporta dois modos de conexão configurados no arquivo `authentication.mongo`.
 
-      root,minhasenha123
+Edite o arquivo:
 
+```bash
+nano src/conexion/passphrase/authentication.mongo
+```
 
-   #### 5. Criar tabelas e inserir dados iniciais
+  * **Opção A - MongoDB Local (Sem senha):**
+    Se você estiver rodando o Mongo instalado diretamente na máquina sem autenticação, escreva apenas a palavra `local` no arquivo.
 
-      python3 src/create_tables_and_records.py
+    Conteúdo do arquivo:
 
+    ```text
+    local
+    ```
 
-   #### 6. Executar o sistema principal
+  * **Opção B - MongoDB com Autenticação (Docker/Servidor):**
+    Se estiver usando um Docker ou um banco com senha, coloque as credenciais no formato `usuario,senha`.
 
-      python3 src/principal.py
+    Conteúdo do arquivo (exemplo):
 
+    ```text
+    root,minhasenha123
+    ```
 
-   O menu principal será exibido no terminal:
+#### 5\. Criar coleções e inserir dados iniciais
 
-      === MENU PRINCIPAL ===
-      1 - Relatórios
-      2 - Inserir Registros
-      3 - Atualizar Registros
-      4 - Remover Registros
-      0 - Sair
+Antes de rodar o sistema, execute o script que popula o banco, criando as coleções e inserindo dados de exemplo.
 
+```bash
+python3 src/createCollectionsAndData.py
+```
 
-   #### 7. Encerrar o ambiente virtual
+> *Mensagem esperada: "Dados iniciais inseridos com sucesso\!"*
 
-      deactivate
+#### 6\. Executar o sistema principal
 
+```bash
+python3 src/principal.py
+```
+
+O menu principal será exibido após a splash screen:
+
+```text
+############################################################
+#                     MENU PRINCIPAL                       #
+############################################################
+#                                                          #
+#    1 - RELATÓRIOS                                        #
+#    2 - INSERIR REGISTROS                                 #
+#    3 - ATUALIZAR REGISTROS                               #
+#    4 - REMOVER REGISTROS                                 #
+#    0 - SAIR                                              #
+#                                                          #
+############################################################
+```
 
 ## Relatórios Implementados
 
-1. **Relatório de Empréstimos Detalhados (JOIN):**
-   Exibe leitor, livro, data de empréstimo e devolução.
+1.  **Relatório de Empréstimos Detalhados:**
+    Utiliza o pipeline `$lookup` para buscar dados das coleções `leitor` e `livro` e exibir os nomes em vez dos IDs nos empréstimos.
 
-2. **Relatório de Livros Mais Emprestados (GROUP BY):**
-   Mostra a contagem total de empréstimos por livro.
-
-
-## Dicas Extras
-
-* **Rodar o MySQL manualmente:**
-
-  ```bash
-  sudo service mysql start
-  ```
-* **Verificar status do banco:**
-
-  ```bash
-  sudo service mysql status
-  ```
-* **Encerrar banco:**
-
-  ```bash
-  sudo service mysql stop
-  ```
+2.  **Relatório de Livros Mais Emprestados:**
+    Utiliza o pipeline `$group` para contar quantas vezes cada livro aparece na coleção de empréstimos e ordena de forma decrescente.
 
 ## Solução de Problemas Comuns
 
-* *Erro:* mysql.connector.errors.ProgrammingError: 1045 (28000)
+  * **Erro:** `pymongo.errors.ServerSelectionTimeoutError`
 
-   > As credenciais no arquivo authentication.mysql estão incorretas.
+    > **Causa:** O MongoDB não está rodando ou o endereço/porta está errado.
+    > **Solução:** Verifique se o serviço do Mongo está ativo (`sudo service mongod status` ou `docker ps`).
 
-* *Erro:* Table 'sistema_biblioteca.leitor' doesn't exist
+  * **Erro:** `ModuleNotFoundError: No module named 'conexion'`
 
-   > Execute novamente:
+    > **Causa:** Você está tentando rodar o script de dentro da pasta `src` sem configurar o path, ou da raiz incorretamente.
+    > **Solução:** Execute sempre a partir da raiz do projeto usando `python3 src/principal.py`.
 
-      python3 src/create_tables_and_records.py
-
+-----

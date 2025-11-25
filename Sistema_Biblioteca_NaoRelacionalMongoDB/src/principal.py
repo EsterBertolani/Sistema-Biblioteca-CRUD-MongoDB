@@ -141,7 +141,7 @@ def run():
             case 0:
                 print(tela_inicial.get_updated_screen())
                 config.clear_console()
-                print("Saindo...")
+                print(config.EXIT)
                 break
 
             case _:

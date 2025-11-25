@@ -1,6 +1,7 @@
 from conexion.mongo_queries import MongoQueries
 from utils import config
 
+
 class SplashScreen:
 
     def __init__(self):
@@ -36,19 +37,27 @@ class SplashScreen:
     # Template da Splash Screen
     # --------------------------------------------------------------
     def get_updated_screen(self):
+        l = str(self.get_total_leitores()).rjust(5)
+        b = str(self.get_total_livros()).rjust(5)
+        e = str(self.get_total_emprestimos()).rjust(5)
+
+        line_created = f"  CRIADO POR: {self.created_by}"
+        line_disc = f"  DISCIPLINA: {self.disciplina}"
+        line_prof = f"  PROFESSOR:   {self.professor}"
+
         return f"""
-###################################################################
-#              SISTEMA DE BIBLIOTECA - MONGODB                    #
-#                                                                 #
-#  TOTAL DE REGISTROS:                                            #
-#     1 - LEITORES:     {str(self.get_total_leitores()).rjust(5)} #
-#     2 - LIVROS:       {str(self.get_total_livros()).rjust(5)}   #
-#     3 - EMPRÉSTIMOS:  {str(self.get_total_emprestimos()).rjust(5)} #
-#                                                                 #
-#  CRIADO POR: {self.created_by}
-#  DISCIPLINA: {self.disciplina}
-#  PROFESSOR:   {self.professor}
-###################################################################
+###########################################################################
+#                    SISTEMA DE BIBLIOTECA - MONGODB                      #
+#                                                                         #
+#  TOTAL DE REGISTROS:                                                    #
+#     1 - LEITORES:     {l}                                             #
+#     2 - LIVROS:       {b}                                             #
+#     3 - EMPRÉSTIMOS:  {e}                                             #
+#                                                                         #
+#{line_created.ljust(73)}#
+#{line_disc.ljust(73)}#
+#{line_prof.ljust(73)}#
+###########################################################################
 """
 
     def show(self):

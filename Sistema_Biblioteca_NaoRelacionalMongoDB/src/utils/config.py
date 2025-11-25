@@ -3,32 +3,54 @@
 # ===============================
 
 MENU_PRINCIPAL = """
-=== MENU PRINCIPAL ===
-1 - Relatórios
-2 - Inserir Registros
-3 - Atualizar Registros
-4 - Remover Registros
-0 - SAIR
+############################################################
+#                     MENU PRINCIPAL                       #
+############################################################
+#                                                          #
+#    1 - RELATÓRIOS                                        #
+#    2 - INSERIR REGISTROS                                 #
+#    3 - ATUALIZAR REGISTROS                               #
+#    4 - REMOVER REGISTROS                                 #
+#    0 - SAIR                                              #
+#                                                          #
+############################################################
 """
 
 MENU_RELATORIOS = """
-=== RELATÓRIOS ===
-1 - Relatório de Empréstimos Detalhados
-2 - Relatório de Total de Empréstimos por Livro
-0 - SAIR
+############################################################
+#                       RELATÓRIOS                         #
+############################################################
+#                                                          #
+#    1 - RELATÓRIO DE EMPRÉSTIMOS DETALHADOS               #
+#    2 - RELATÓRIO DE TOTAL DE EMPRÉSTIMOS POR LIVRO       #
+#    0 - SAIR                                              #
+#                                                          #
+############################################################
 """
 
 MENU_ENTIDADES = """
-=== ENTIDADES ===
-1 - Leitores
-2 - Livros
-3 - Empréstimos
-0 - SAIR
+############################################################
+#                        ENTIDADES                         #
+############################################################
+#                                                          #
+#    1 - LEITORES                                          #
+#    2 - LIVROS                                            #
+#    3 - EMPRÉSTIMOS                                       #
+#    0 - SAIR                                              #
+#                                                          #
+############################################################
+"""
+
+EXIT = """
+############################################################
+#          OBRIGADO POR UTILIZAR O NOSSO SISTEMA!          #
+############################################################
 """
 
 # ===============================
 # FUNÇÃO UTILITÁRIA
 # ===============================
+
 
 def clear_console(wait_time: int = 2):
     """
