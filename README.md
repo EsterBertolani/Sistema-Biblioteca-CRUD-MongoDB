@@ -30,8 +30,7 @@ O sistema implementa:
 
 ## Estrutura do Projeto
 
-```
-
+````
 .
 ├── src/
 │   ├── conexion/                           # Conexão com o Banco de Dados
@@ -84,7 +83,7 @@ git clone https://github.com/EsterBertolani/Sistema-Biblioteca-CRUD-MongoDB.git
 cd Sistema-Biblioteca-CRUD-MongoDB
 ````
 
-#### 2\. Criar e ativar o ambiente virtual
+#### 2. Criar e ativar o ambiente virtual
 
 ```bash
 python3 -m venv venv
@@ -92,41 +91,42 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-#### 3\. Instalar dependências
+#### 3. Instalar dependências
 
 ```bash
 pip install -r src/requirements.txt
 ```
 
-#### 4\. Configurar a Conexão com o MongoDB
+#### 4. Configurar a Conexão com o MongoDB
 
-O sistema suporta dois modos de conexão configurados no arquivo `authentication.mongo`.
+O sistema utiliza uma **Connection String (URI)** padrão para se conectar ao banco. Isso permite flexibilidade para conectar localmente, em containers Docker ou na nuvem (Atlas).
 
-Edite o arquivo:
-
+Edite o arquivo de configuração:
 ```bash
 nano src/conexion/passphrase/authentication.mongo
-```
+````
 
-  * **Opção A - MongoDB Local (Sem senha):**
-    Se você estiver rodando o Mongo instalado diretamente na máquina sem autenticação, escreva apenas a palavra `local` no arquivo.
+Você deve colar a **URL de conexão completa** dentro deste arquivo.
 
-    Conteúdo do arquivo:
-
-    ```text
-    local
-    ```
-
-  * **Opção B - MongoDB com Autenticação (Docker/Servidor):**
-    Se estiver usando um Docker ou um banco com senha, coloque as credenciais no formato `usuario,senha`.
-
-    Conteúdo do arquivo (exemplo):
+  * **Opção A - MongoDB Local (Padrão):**
+    Se você está rodando o Mongo na sua própria máquina (sem senha), use:
 
     ```text
-    root,minhasenha123
+    mongodb://localhost:27017/
     ```
 
-#### 5\. Criar coleções e inserir dados iniciais
+  * **Opção B - MongoDB com Autenticação (Docker):**
+    Se estiver usando um banco com senha, o formato deve ser:
+    `mongodb://usuario:senha@host:porta/`
+
+    Exemplo (para usuário `root` e senha `minhasenha123`):
+
+    ```text
+    mongodb://root:minhasenha123@localhost:27017/
+    ```
+
+
+#### 5. Criar coleções e inserir dados iniciais
 
 Antes de rodar o sistema, execute o script que popula o banco, criando as coleções e inserindo dados de exemplo.
 
@@ -136,7 +136,7 @@ python3 src/createCollectionsAndData.py
 
 > *Mensagem esperada: "Dados iniciais inseridos com sucesso\!"*
 
-#### 6\. Executar o sistema principal
+#### 6. Executar o sistema principal
 
 ```bash
 python3 src/principal.py
