@@ -10,7 +10,7 @@
 
 **Turma:** 4HC1A
 
-**Vídeo de apresentação:** [Link do Vídeo - Atualizar]
+**Vídeo de apresentação:** (https://youtu.be/DoS1OmE0yO8)
 
 ## Descrição do Projeto
 
