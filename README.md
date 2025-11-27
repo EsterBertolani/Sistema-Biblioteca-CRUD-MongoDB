@@ -4,7 +4,7 @@
 
 **Integrantes:** Alexsander Borchardt, Ester Bertolani, João Paulo Poubel, Marcelo Mindas, Vanderson de Almeida
 
-**Disciplina:** Banco de Dados Não Relacional
+**Disciplina:** Banco de Dados
 
 **Professor:** Howard Roatti Cruz
 
